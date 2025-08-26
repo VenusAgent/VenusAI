@@ -221,9 +221,11 @@ agent = Venus(tool_modules='agent_tools')
 ```python
 # agent_tools.py
 from venus.types import Deps
+from venus.caching import cached
 from venus.decorators import tool, mcp_tool, safe_call, autofix
 
 @tool
+@cached(ttl=240)
 def get_id():
     return 1
 
