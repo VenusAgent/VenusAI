@@ -1,0 +1,17 @@
+mcp
+rich
+click
+tinydb
+fasta2a
+attrobj
+fastapi
+uvicorn
+pydantic
+aiocache
+aiofiles
+async-lru
+cachetools
+pydantic-ai
+python-dotenv
+typing-extensions
+e2b-code-interpreter
