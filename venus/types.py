@@ -3,7 +3,7 @@ This is a module that provides various types and classes for the Venus AI agent.
 """
 
 import importlib
-from types import EllipsisType
+from types import EllipsisType, GenericAlias
 from typing import (
     Any,
     Awaitable,
@@ -99,7 +99,7 @@ class Deps(Object, Generic[DepsT]):
     - deps[DepType]
     - deps[key]
     """
-    
+
     @property
     def main(self) -> DepsT:
         """
@@ -115,7 +115,7 @@ class Deps(Object, Generic[DepsT]):
             data (dict, optional): The initial data for the Deps object.
             **kwargs (T, optional): Optional dependencies that can be used to initialize the Deps object.
         """
-        
+
         super().__init__(**(data or kwargs))
 
     def __bool__(self) -> bool:
@@ -141,15 +141,20 @@ class Deps(Object, Generic[DepsT]):
         Returns:
             DepsT: The value for the given key or the default value.
         """
-        if not isinstance(key, str):
-            adapter = TypeAdapter(key)
+        if not isinstance(key, str) and (
+            hasattr(key, "__class_getitem__") or isinstance(key, GenericAlias)
+        ):
+            try:
+                adapter = TypeAdapter(key)
+            except:
+                return super().get(key, default)
             for v in self.values():
                 try:
                     adapter.validate_python(v)
                     return v
                 except:
                     continue
-            return default
+        key = key if isinstance(key, str) else get_origin(key) or key
         return super().get(key, default)
 
     @classmethod
