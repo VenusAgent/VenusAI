@@ -210,6 +210,36 @@ from venus.permissions import Permissions
 code_agent = VenusCode(name="coder", permission=Permissions.READ_EXECUTE)
 ```
 
+### Dependency Injection
+```python
+
+from venus import Venus
+from venus.types import Deps, DepsT, RunContext
+
+import uuid
+import time
+
+agent = Venus()
+
+uuidgen = lambda: uuid.uuid4().hex
+datagen = lambda: {'foo': [Deps(bar='baz')]}
+
+class Auth(Deps[DepsT]):
+    id: str
+
+@agent.safe(deps=Deps(id=uuidgen, data=datagen))
+def get_tx(ctx: RunContext[Auth]):
+    # attribute-style access to deps entity `id`
+    txhash = f'%d$%s' % (time.time(), ctx.deps.id)
+     # type-based access to deps entity `foo`
+    data = ctx.deps.get(dict) # None
+    data = ctx.deps.get(list) # [Deps(bar='baz')]
+    
+    # type-based access to deps entity `foo`
+    data = ctx.deps.get(list[Deps]) # [Deps(bar='baz')]
+    return txhash + data.bar
+```
+
 ### Module Tools with Decorators
 
 ```python
