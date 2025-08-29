@@ -20,6 +20,7 @@ from typing import (
 )
 
 from attrobj import Object
+from pydantic import TypeAdapter
 from pydantic_ai._run_context import AgentDepsT, RunContext
 from pydantic_ai.agent import Agent
 from pydantic_ai.mcp import MCPServerSSE, MCPServerStdio, MCPServerStreamableHTTP
@@ -140,6 +141,15 @@ class Deps(Object, Generic[DepsT]):
         Returns:
             DepsT: The value for the given key or the default value.
         """
+        if not isinstance(key, str):
+            adapter = TypeAdapter(key)
+            for v in self.values():
+                try:
+                    adapter.validate_python(v)
+                    return v
+                except:
+                    continue
+            return default
         return super().get(key, default)
 
     @classmethod
