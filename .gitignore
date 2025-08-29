@@ -10,6 +10,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Project directories
+
+fixes/
+.e2b/
+
 # Tests
 
 tests.py
