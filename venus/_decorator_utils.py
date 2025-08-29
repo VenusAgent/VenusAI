@@ -36,8 +36,7 @@ from .errors import (
 from .logger import VenusConsole
 from .schemas import FixFuncResult
 from .settings import settings
-from .types import Deps, ReturnType, RunContext
-from .permissions import Permissions, get_allowed_tools
+from .types import Deps, ReturnType, RunContext, get_base_type
 
 DepsT = TypeVar("DepsT")
 Param = ParamSpec("Param")
@@ -55,28 +54,6 @@ Args:
     fn (Callable[..., ReturnType]): The function to run.
 Returns:
     ReturnType: The result of the function.
-"""
-
-get_type = lambda func, param: cast(type, get_type_hints(func).get(param, None))
-"""
-Get the type of a parameter in a function.
-Args:
-    func (Callable[..., Any]): The function to get the type from.
-    param (str): The parameter name.
-Returns:
-    type: The type of the parameter.
-"""
-
-get_base_type = lambda func, param: cast(
-    type, get_origin(get_type(func, param)) or get_type(func, param)
-)
-"""
-Get the base type of a parameter in a function.
-Args:
-    func (Callable[..., Any]): The function to get the type from.
-    param (str): The parameter name.
-Returns:
-    type: The base type of the parameter.
 """
 
 makekey = lambda fn: cast(
