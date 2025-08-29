@@ -90,13 +90,14 @@ class ErrorDict(BaseModel):
         if self.frame_info:
             return self.frame_info["context"]
         return None
-    
+
     @property
     def message(self) -> str:
         """Get a serialized error message."""
-        return \
-            f"Error occured in `{self.function}`: {self.exception} at {self.location}.\n"\
+        return (
+            f"Error occured in `{self.function}`: {self.exception} at {self.location}.\n"
             f"Code context: {self.context}"
+        )
 
 
 T = TypeVar("T", bound=BaseModel | Any)

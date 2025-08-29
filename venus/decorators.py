@@ -58,7 +58,9 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction:
                 function=frame.f_code.co_name,
                 frame_info=get_frame_info(frame),
             )
-            handlers = cast(dict[str, dict[str, Callable[..., None]]], getattr(func, "handlers", {}))
+            handlers = cast(
+                dict[str, dict[str, Callable[..., None]]], getattr(func, "handlers", {})
+            )
             if handlers:
                 vc.log(
                     f"Function {func.__name__} have handlers, calling them...",
