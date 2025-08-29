@@ -14,6 +14,9 @@ from typing import (
     TypeAlias,
     TypeVar,
     Union,
+    cast,
+    get_origin,
+    get_type_hints,
 )
 
 from attrobj import Object
@@ -61,6 +64,29 @@ ToolsPrepareFunc: TypeAlias = Callable[
     [RunContext[AgentDepsT], list[ToolDefinition]],
     Awaitable[list[ToolDefinition] | None],
 ]
+
+
+get_type = lambda func, param: cast(type, get_type_hints(func).get(param, None))
+"""
+Get the type of a parameter in a function.
+Args:
+    func (Callable[..., Any]): The function to get the type from.
+    param (str): The parameter name.
+Returns:
+    type: The type of the parameter.
+"""
+
+get_base_type = lambda func, param: cast(
+    type, get_origin(get_type(func, param)) or get_type(func, param)
+)
+"""
+Get the base type of a parameter in a function.
+Args:
+    func (Callable[..., Any]): The function to get the type from.
+    param (str): The parameter name.
+Returns:
+    type: The base type of the parameter.
+"""
 
 
 class Deps(Object, Generic[DepsT]):
