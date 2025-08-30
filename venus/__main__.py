@@ -6,6 +6,7 @@ It allows users to interact with the assistant through various commands.
 
 import importlib
 import os
+import sys
 from typing import Any, cast
 
 import click
@@ -18,6 +19,8 @@ from .logger import VenusConsole
 from .mcp_server import MCP
 
 vc = VenusConsole()
+
+sys.path.insert(0, os.getcwd())
 
 
 def attr_resolve(obj: Any, path: str):
@@ -38,12 +41,12 @@ def attr_resolve(obj: Any, path: str):
     return obj
 
 
-def start_chat(app: Venus, deps: None = None):
+def start_chat(app: Venus, deps: None = None, prog_name: str | None = None):
     """
     Start the chat interface.
     """
-    name = app.name or "venus"
-    app.to_cli_sync(deps=deps, prog_name=name)
+    prog_name = prog_name or app.name or "venus"
+    app.to_cli_sync(deps=deps, prog_name=prog_name)
 
 
 @click.group()
@@ -57,7 +60,8 @@ def main():
 
 @main.command()
 @click.argument("app_string")
-def chat(app_string: str):
+@click.option("--name", default="venus", help="Name of the chat assistant")
+def chat(app_string: str, name: str):
     """Start the chat interface."""
     try:
         module_name, app_name = app_string.split(":", maxsplit=1)
@@ -70,7 +74,7 @@ def chat(app_string: str):
         else:
             app = getattr(module, app_name)
 
-        start_chat(app)
+        start_chat(app, prog_name=name)
 
     except ValueError:
         vc.print_exception(show_locals=True)
@@ -175,7 +179,6 @@ def serve(app: str, host: str, port: int, auto: bool, env: str, plugin: str = No
     try:
         module, app = app.split(":")
         app = app.removesuffix(".api")
-
         module_instance = importlib.import_module(module)
         app_instance = attr_resolve(module_instance, app)
 
@@ -221,7 +224,7 @@ def serve(app: str, host: str, port: int, auto: bool, env: str, plugin: str = No
             vc.fail(
                 "[cyan]App.tools_http_api()[/cyan] "
                 "[bold yellow]not called yet.[/bold yellow]\n"
-                "[bold green]Hint:[/bold green] Pass [italic]--auto[/italic] to use registered tools of Agent automatically."
+                "[bold green]Hint:[/bold green]     Pass [italic]--auto[/italic] to use registered tools of Agent automatically."
             )
             return
 

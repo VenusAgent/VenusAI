@@ -2,7 +2,7 @@ from typing import Callable, Union
 
 from attrobj import Object
 
-from .types import Deps, ReturnType, Agent
+from .types import Agent, Deps, ReturnType
 
 VenusCode = Agent  # Alias for Agent, used in decorators
 

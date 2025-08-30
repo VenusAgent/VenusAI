@@ -1,83 +1,51 @@
-import json
-import types
-import tinydb
-import inspect
-import logfire
 import asyncio
+import inspect
+import json
 import logging
-import uvicorn
-
-from pathlib import Path
-from datetime import datetime
-from dotenv import load_dotenv
+import os
+import types
 from collections import defaultdict
-
 from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import (Any, Callable, Dict, Generic, Literal, Optional, Sequence,
+                    TypeVar, Union, cast, get_type_hints, overload)
 
-
-from .settings import Settings
-from .logger import VenusConsole
-from .schemas import DoesNeedFix, FixFuncResult
-from .prompts import CODING_PROMPT
-from .helpers import tools, time_diff_prettify
-from .permissions import Permissions, get_allowed_tools
-from ._module_utils import import_module
-from ._decorator_utils import (
-    extract_function_body,
-    has_context_param,
-)
-from .decorators import safe_call, is_context_tool
-
-from typing import (
-    Any,
-    Dict,
-    Union,
-    Literal,
-    TypeVar,
-    Generic,
-    Callable,
-    Sequence,
-    cast,
-    overload,
-    Optional,
-    get_type_hints,
-)
-
+import logfire
+import tinydb
+import uvicorn
+from dotenv import load_dotenv
 from fastapi import APIRouter as Router
 from fastapi import FastAPI as Server
-
 from pydantic_ai import Agent, EndStrategy
-from pydantic_ai.agent.abstract import EventStreamHandler
 from pydantic_ai import _system_prompt as _system_prompt
-from pydantic_ai._run_context import AgentDepsT
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.output import OutputSpec, OutputDataT
 from pydantic_ai._agent_graph import HistoryProcessor
-from pydantic_ai.toolsets import ToolsetFunc
-from pydantic_ai.agent import (
-    InstrumentationSettings,
-)
+from pydantic_ai._run_context import AgentDepsT
+from pydantic_ai.agent import InstrumentationSettings
+from pydantic_ai.agent.abstract import EventStreamHandler
+from pydantic_ai.builtin_tools import AbstractBuiltinTool
 from pydantic_ai.mcp import MCPServer
 from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.openai import Model
-from pydantic_ai.tools import Tool, ToolFuncContext, ToolFuncEither, ToolFuncPlain
-
-from .types import FuncParams, ToolsPrepareFunc, _EnableFeature, Deps
-
-from pydantic_ai.tools import ToolParams
-from pydantic_ai.toolsets import AbstractToolset
-from pydantic_ai.builtin_tools import AbstractBuiltinTool
-
-from .errors import (
-    ErrorDict,
-    ExecutionNotAllowed,
-    InvalidFunction,
-    InvalidTool,
-    InvalidTools,
-    InvalidContextParam,
-)
+from pydantic_ai.output import OutputDataT, OutputSpec
+from pydantic_ai.settings import ModelSettings
+from pydantic_ai.tools import (Tool, ToolFuncContext, ToolFuncEither,
+                               ToolFuncPlain, ToolParams)
+from pydantic_ai.toolsets import AbstractToolset, ToolsetFunc
 
 from . import decorators
+from ._decorator_utils import extract_function_body, has_context_param
+from ._module_utils import import_module
+from .decorators import is_context_tool, safe_call
+from .errors import (ErrorDict, ExecutionNotAllowed, InvalidContextParam,
+                     InvalidFunction, InvalidTool, InvalidTools)
+from .helpers import time_diff_prettify, tools
+from .logger import VenusConsole
+from .permissions import Permissions, get_allowed_tools
+from .prompts import CODING_PROMPT
+from .schemas import DoesNeedFix, FixFuncResult
+from .settings import Settings
+from .types import Deps, FuncParams, ToolsPrepareFunc, _EnableFeature
 
 """
 Agent module for building and configuring an agent with HTTP client support.
@@ -448,7 +416,7 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
             )
         self._agent_built = True
         if load_env:
-            load_dotenv(override=override_env)
+            load_dotenv(Path(os.getcwd()) / ".env", override=override_env)
 
         model = settings.model_name
         system_prompt = settings.system_prompt.format(

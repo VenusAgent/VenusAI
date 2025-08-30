@@ -1,0 +1,32 @@
+name: Publish to TestPyPI with uv
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install uv
+      run: pip install uv
+
+    - name: Install dependencies
+      run: uv pip install setuptools wheel twine
+
+    - name: Build package
+      run: python setup.py sdist bdist_wheel
+
+    - name: Publish to TestPyPI
+      env:
+        PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+      run: twine upload dist/* --repository testpypi --username __token__ --password $PYPI_TOKEN

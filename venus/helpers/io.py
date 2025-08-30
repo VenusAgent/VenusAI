@@ -6,6 +6,7 @@ import aiofiles
 import aiofiles.os
 
 from ..decorators import safe_call
+from ..errors import ErrorDict
 from ..types import FunctionToolset
 
 """
@@ -110,7 +111,7 @@ async def get_file_stats(file_path: str) -> dict:
 @safe_call
 async def execute_code(
     code: str, exec_type: Literal["eval", "exec"] = "exec"
-) -> str | None:
+) -> str | ErrorDict | None:
     """
     Executes a script and returns the output.
 
@@ -125,7 +126,7 @@ async def execute_code(
         case "exec":
             exec(code)
         case "eval":
-            return eval(code)
+            return str(eval(code))
         case _:
             return "Invalid exec_type. Use 'exec' or 'eval'."
     return None

@@ -5,7 +5,7 @@ Docs: https://venus.tomris.dev/docs
 """
 
 from .agent import Tool, Venus, VenusCode
-from .decorators import tool, mcp_tool, safe_call, autofix
+from .decorators import autofix, mcp_tool, safe_call, tool
 from .errors import ErrorDict
 from .helpers import e2b, tools
 
@@ -21,3 +21,5 @@ __all__ = [
     "e2b",
     "tools",
 ]
+
+__version__ = "1.28.3"

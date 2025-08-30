@@ -5,6 +5,7 @@ tinydb
 fasta2a
 attrobj
 fastapi
+logfire
 uvicorn
 pydantic
 aiocache
