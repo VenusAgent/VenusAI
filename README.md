@@ -4,6 +4,27 @@ VenusAI is a **secure and extensible Agent framework** built for modern AI appli
 It offers **dynamic tool management**, **powerful decorators**, **advanced caching**, **robust error handling**, a built-in **CLI**, and seamless **Claude MCP integration**.
 
 ---
+## Installation
+
+Install library via pip or uv.
+
+> Note: The venusai is alias of venai, you can use both but venai is the main package.
+
+```bash
+pip install venai
+pip install venusai
+```
+
+**or**
+
+```bash
+uv add venai
+uv add venusai
+```
+
+Install latest NodeJS with npx for Claude Desktop HTTP support.
+> Note: mcp-remote package used for support.
+---
 
 ## 🔑 Key Capabilities
 
