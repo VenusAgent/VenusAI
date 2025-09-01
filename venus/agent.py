@@ -1254,7 +1254,7 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
         **options,  # options for passing to Venus ctor
     ):
         load_dotenv(override=options.pop("override_env", False))
-        
+
         execution_allowed = execution_allowed or (permission & Permissions.EXECUTE)
 
         name = options.pop("name", settings.agent_name)
