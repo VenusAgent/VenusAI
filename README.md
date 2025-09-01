@@ -125,7 +125,7 @@ def get_reserves():
 def get_details():
     return {'code': 'tr', 'swift': 1283, 'id': 1710}
 
-@agent.safe(retries=3, deps=Deps.new(reserve=get_reserves, details=get_details))
+@agent.safe(retries=3, deps=Deps(reserve=get_reserves, details=get_details))
 async def add_money(ctx: RunContext[Bank[int]], fund: int):
     if fund <= 5:
         raise ValueError("Enter a number greater than 5.")
@@ -227,8 +227,18 @@ print(result.output)
 ```python
 from venus import VenusCode
 from venus.permissions import Permissions
+from venus.helpers.io import io_toolset
 
-code_agent = VenusCode(name="coder", permission=Permissions.READ_EXECUTE)
+def my_permitter(permission: int):
+    if not permission & Permissions.EXECUTE and permission & Permissions.READ:
+        return ['read_file_content']
+    return list(io_toolset.tools.keys())
+
+code_agent = VenusCode(
+                name="coder",
+                permission=Permissions.READ_EXECUTE,
+                permitter=my_permitter # do not set a permitter to use default permitter
+            ) 
 ```
 
 ### Dependency Injection
@@ -240,7 +250,7 @@ from venus.types import Deps, DepsT, RunContext
 import uuid
 import time
 
-agent = Venus()
+agent = Venus(deps_type=int)
 
 uuidgen = lambda: uuid.uuid4().hex
 datagen = lambda: {'foo': [Deps(bar='baz')]}
@@ -249,14 +259,18 @@ class Auth(Deps[DepsT]):
     id: str
 
 @agent.safe(deps=Deps(id=uuidgen, data=datagen))
-def get_tx(ctx: RunContext[Auth]):
+def get_tx(ctx: RunContext[Auth[int]]): # AgentDepsT is int here
     # attribute-style access to deps entity `id`
     txhash = f'%d$%s' % (time.time(), ctx.deps.id)
      # type-based access to deps entity `foo`
     data = ctx.deps.get(dict) # None
     data = ctx.deps.get(list) # [Deps(bar='baz')]
+
+    # access main dependency for agent
+    agentdeps = ctx.deps.main # int
     
     # type-based access to deps entity `foo`
+    # use exact annotation to access it:
     data = ctx.deps.get(list[Deps]) # [Deps(bar='baz')]
     return txhash + data.bar
 ```
