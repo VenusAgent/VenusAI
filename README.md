@@ -231,14 +231,14 @@ from venus.helpers.io import io_toolset
 
 def my_permitter(permission: int):
     if not permission & Permissions.EXECUTE and permission & Permissions.READ:
-        return ['read_file_content']
+        return ["read_file_content"]
     return list(io_toolset.tools.keys())
 
 code_agent = VenusCode(
-                name="coder",
-                permission=Permissions.READ_EXECUTE,
-                permitter=my_permitter # do not set a permitter to use default permitter
-            ) 
+    name="coder",
+    permission=Permissions.READ_EXECUTE,
+    permitter=my_permitter,  # do not set a permitter to use default permitter
+)
 ```
 
 ### Dependency Injection
