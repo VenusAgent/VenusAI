@@ -8,8 +8,20 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import (Any, Callable, Dict, Generic, Literal, Optional, Sequence,
-                    TypeVar, Union, cast, get_type_hints, overload)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Literal,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+    get_type_hints,
+    overload,
+)
 
 import logfire
 import tinydb
@@ -29,16 +41,27 @@ from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.openai import Model
 from pydantic_ai.output import OutputDataT, OutputSpec
 from pydantic_ai.settings import ModelSettings
-from pydantic_ai.tools import (Tool, ToolFuncContext, ToolFuncEither,
-                               ToolFuncPlain, ToolParams)
+from pydantic_ai.tools import (
+    Tool,
+    ToolFuncContext,
+    ToolFuncEither,
+    ToolFuncPlain,
+    ToolParams,
+)
 from pydantic_ai.toolsets import AbstractToolset, ToolsetFunc
 
 from . import decorators
 from ._decorator_utils import extract_function_body, has_context_param
 from ._module_utils import import_module
 from .decorators import is_context_tool, safe_call
-from .errors import (ErrorDict, ExecutionNotAllowed, InvalidContextParam,
-                     InvalidFunction, InvalidTool, InvalidTools)
+from .errors import (
+    ErrorDict,
+    ExecutionNotAllowed,
+    InvalidContextParam,
+    InvalidFunction,
+    InvalidTool,
+    InvalidTools,
+)
 from .helpers import time_diff_prettify, tools
 from .logger import VenusConsole
 from .permissions import Permissions, get_allowed_tools
