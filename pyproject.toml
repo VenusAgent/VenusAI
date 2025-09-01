@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "venai"
+version = "1.28.4"
+description = "VenusAI is a secure and extensible Agent framework built for modern AI applications."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp",
+    "rich",
+    "click",
+    "tinydb",
+    "fasta2a",
+    "attrobj",
+    "fastapi",
+    "logfire",
+    "uvicorn",
+    "pydantic",
+    "aiocache",
+    "aiofiles",
+    "async-lru",
+    "cachetools",
+    "pydantic-ai",
+    "python-dotenv",
+    "typing-extensions",
+    "e2b-code-interpreter",
+]
+authors = [
+    {name = "Mert Sirakaya", email = "contact@tomris.dev"}
+]
+maintainers = [
+    {name = "Mert Sirakaya", email = "contact@tomris.dev"}
+]
+license = {text = "MIT"}
+keywords = ["safety", "ai", "agent", "llm", "agentic ai", "pydantic", "pydantic-ai", "self-healing", "sandbox", "ai agent"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Documentation = "https://venai.tech/docs"
+Source = "https://github.com/VenusAgent/VenusAI"
+Tracker = "https://github.com/VenusAgent/VenusAI/issues"
+
+[project.scripts]
+venus = "venus.__main__:main"
+venai = "venus.__main__:main"
+
+[tool.hatch.build]
+packages = ["venus"]
+include-package-data = true
