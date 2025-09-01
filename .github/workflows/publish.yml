@@ -1,4 +1,4 @@
-name: Publish to TestPyPI with uv
+name: Publish to PyPI with uv
 
 on:
   push:
@@ -23,15 +23,15 @@ jobs:
     - name: Create virtual environment
       run: uv venv venv
 
-    - name: Install dependencies
+    - name: Install build dependencies
       run: |
         source venv/bin/activate
-        uv pip install setuptools wheel twine
+        uv pip install build twine
 
     - name: Build package
       run: |
         source venv/bin/activate
-        python setup.py sdist bdist_wheel
+        python -m build
 
     - name: Publish to TestPyPI
       env:
