@@ -1254,6 +1254,8 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
         **options,  # options for passing to Venus ctor
     ):
         load_dotenv(override=options.pop("override_env", False))
+        
+        execution_allowed = execution_allowed or (permission & Permissions.EXECUTE)
 
         name = options.pop("name", settings.agent_name)
         coding_tools = options.pop("tools", []) or tools
@@ -1293,7 +1295,7 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
         if not permission & Permissions.WRITE:
             system_prompt += "You are not allowed to write files. "
 
-        elif not execution_allowed or not permission & Permissions.EXECUTE:
+        elif not execution_allowed:
             system_prompt += "You are not allowed to execute code. "
 
         self._tools = coding_tools
