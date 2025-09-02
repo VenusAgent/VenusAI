@@ -29,7 +29,7 @@ from .types import Deps, ReturnType, _EnableFeature
 vc = VenusConsole()
 
 
-def safe_call(func: Callable[..., ReturnType]) -> SafeFunction:
+def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
     """
     Decorator to suppress exceptions in a function.
 
@@ -118,7 +118,7 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction:
     return wrapper
 
 
-def tool(func: Callable[..., ReturnType]) -> ToolFunc:
+def tool(func: Callable[..., ReturnType]) -> ToolFunc[ReturnType]:
     """
     Decorator to mark a function as a tool.
 
@@ -139,7 +139,7 @@ def tool(func: Callable[..., ReturnType]) -> ToolFunc:
 
 def autofix(
     func: Callable[..., ReturnType] | None = None, *, reload_function: bool = True
-) -> Autofix:
+) -> Autofix[ReturnType]:
     """
     Decorator to automatically fix the function.
 
@@ -184,7 +184,7 @@ def mcp_tool(
     func: Callable[..., ReturnType] | None = None,
     deps: List | Tuple | Deps | Dict | None = None,
     safe: bool = False,
-) -> MCPTool:
+) -> MCPTool[ReturnType]:
     """
     Decorator to mark a function as an MCP tool.
     This decorator can be used to register a function as a tool in the MCP server.
