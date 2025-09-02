@@ -4,27 +4,17 @@ This is a module that provides various types and classes for the Venus AI agent.
 
 import importlib
 from types import EllipsisType, GenericAlias
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Generic,
-    Literal,
-    ParamSpec,
-    TypeAlias,
-    TypeVar,
-    Union,
-    cast,
-    get_origin,
-    get_type_hints,
-)
+from typing import (Any, Awaitable, Callable, Generic, Literal, ParamSpec,
+                    TypeAlias, TypeVar, Union, cast, get_origin,
+                    get_type_hints)
 
 from attrobj import Object
 from pydantic import TypeAdapter
 from pydantic_ai import ModelRetry
 from pydantic_ai._run_context import AgentDepsT, RunContext
 from pydantic_ai.agent import Agent
-from pydantic_ai.mcp import MCPServerSSE, MCPServerStdio, MCPServerStreamableHTTP
+from pydantic_ai.mcp import (MCPServerSSE, MCPServerStdio,
+                             MCPServerStreamableHTTP)
 from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.models.test import TestModel
@@ -65,7 +55,6 @@ ToolsPrepareFunc: TypeAlias = Callable[
     [RunContext[AgentDepsT], list[ToolDefinition]],
     Awaitable[list[ToolDefinition] | None],
 ]
-
 
 get_type = lambda func, param: cast(type, get_type_hints(func).get(param, None))
 """
@@ -195,7 +184,7 @@ class Deps(Object, Generic[DepsT]):
         return any_schema()
 
 
-def __getattr__(name: str) -> Union[Entity, type[Entity]]:
+def __getattr__(name: str) -> Entity:
     """
     Dynamic attribute access for the Deps object.
 

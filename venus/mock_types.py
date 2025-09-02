@@ -12,6 +12,7 @@ class BaseWrapper(abc.ABC):
     """
     Base wrapper class for decorators.
     """
+
     pass
 
 
@@ -24,6 +25,7 @@ class ToolFunc(BaseWrapper, Generic[ReturnType]):
     iscoro: bool
     context_tool: bool
 
+
 class MCPTool(BaseWrapper, Generic[ReturnType]):
     """
     Wrapper for mcp_tool decorator.
@@ -33,6 +35,7 @@ class MCPTool(BaseWrapper, Generic[ReturnType]):
     deps: Deps
     iscoro: bool
     mcp_tool: bool
+
 
 class SafeFunction(ToolFunc, Generic[ReturnType]):
     """

@@ -77,15 +77,8 @@ def cached(
                 ) from e
         else:
             try:
-                from cachetools import (
-                    FIFOCache,
-                    LFUCache,
-                    LRUCache,
-                    RRCache,
-                    TLRUCache,
-                    TTLCache,
-                    cached,
-                )
+                from cachetools import (FIFOCache, LFUCache, LRUCache, RRCache,
+                                        TLRUCache, TTLCache, cached)
                 from cachetools.keys import hashkey
 
                 cachekey = (
