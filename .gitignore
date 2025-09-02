@@ -45,6 +45,11 @@ MANIFEST
 *.manifest
 *.spec
 
+## Experimental
+
+experiment/
+backends/
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
