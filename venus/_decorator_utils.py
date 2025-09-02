@@ -10,7 +10,7 @@ from asyncio import run
 from datetime import datetime
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, ParamSpec, TypeVar, Union, cast, get_type_hints
+from typing import Any, Callable, ParamSpec, TypeVar, Union, get_type_hints
 
 from attrobj import Object
 from pydantic_ai import StructuredDict
@@ -35,34 +35,6 @@ Param = ParamSpec("Param")
 vc = VenusConsole()
 main_pattern = re.compile(r"if\s+__name__\s*==\s*['\"]__main__['\"]\s*:")
 
-safe_run = lambda fn, *args, **kwargs: (
-    run(fn(*args, **kwargs)) if inspect.iscoroutinefunction(fn) else fn(*args, **kwargs)
-)
-"""
-Run a function within correct context, sync/async.
-
-Args:
-    fn (Callable[..., ReturnType]): The function to run.
-Returns:
-    ReturnType: The result of the function.
-"""
-
-makekey = lambda fn: cast(
-    Callable[Param, str],
-    lambda *args, **kwargs: (
-        f"{fn.__qualname__}:{args}:{kwargs}" if args or kwargs else fn.__qualname__
-    ),
-)
-"""
-Make cache key for a cached function.
-
-Args:
-    fn (Callable): Cached function to make key.
-
-Returns:
-    Callable: The callable that takes function arguments to make key.
-"""
-
 
 # TODO: Clarify fix instructions logic after first release
 fix_instructions = """
@@ -71,7 +43,6 @@ Focus on resolving the error precisely without introducing new imports or unrela
 Provide a minimal and accurate fix for the error while preserving the existing code structure.
 Verify correctness after applying the fix and ensure no new issues are introduced.
 """
-
 
 def generate_fix_message(source: str, filepath: str, error_data: ErrorDict) -> str:
     """
@@ -96,6 +67,34 @@ def generate_fix_message(source: str, filepath: str, error_data: ErrorDict) -> s
         )
     )
 
+def safe_run(fn: Callable[..., ReturnType], *args, **kwargs) -> ReturnType:
+    """
+    Run a function within correct context, sync/async.
+
+    Args:
+        fn (Callable[..., ReturnType]): The function to run.
+    Returns:
+        ReturnType: The result of the function.
+    """
+    if inspect.iscoroutinefunction(fn):
+        return run(fn(*args, **kwargs))
+    return fn(*args, **kwargs)
+
+def makekey(fn: Callable[..., Any]) -> Callable[..., str]:
+    """
+    Make cache key for a cached function.
+
+    Args:
+        fn (Callable): Cached function to make key.
+
+    Returns:
+        Callable: The callable that takes function arguments to make key.
+    """
+    def _makekey(*args, **kwargs) -> str:
+        if args or kwargs:
+            return f"{fn.__qualname__}:{args}:{kwargs}"
+        return fn.__qualname__
+    return _makekey
 
 def get_frame_info(frame: Any) -> dict:
     """
@@ -141,7 +140,6 @@ def get_frame(trace: TracebackType, exception: BaseException) -> Any:
             tb = exception.__traceback__
             return (tb.tb_next.tb_frame if tb.tb_next else None) or tb.tb_frame
     return inspect.currentframe()
-
 
 def is_context_tool(func: Callable[..., ReturnType]) -> bool:
     """
