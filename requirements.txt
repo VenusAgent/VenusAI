@@ -14,5 +14,6 @@ async-lru
 cachetools
 pydantic-ai
 python-dotenv
+mcp-run-python
 typing-extensions
 e2b-code-interpreter
