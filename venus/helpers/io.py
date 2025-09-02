@@ -1,21 +1,22 @@
 import asyncio
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 
 import aiofiles
 import aiofiles.os
 
+from mcp_run_python.code_sandbox import code_sandbox, RunError, RunSuccess
+from venus.types import Safe
+
 from ..decorators import safe_call
-from ..errors import ErrorDict
 from ..types import FunctionToolset
 
 """
 Tools for file operations.
 """
 
-
 @safe_call
-async def read_file_content(file_path: str) -> str:
+async def read_file_content(file_path: str) -> Safe[str]:
     """
     Reads the content of a file.
 
@@ -30,7 +31,7 @@ async def read_file_content(file_path: str) -> str:
 
 
 @safe_call
-async def write_file_content(file_path: str, content: str) -> None:
+async def write_file_content(file_path: str, content: str) -> Safe[None]:
     """
     Writes content to a file.
 
@@ -45,7 +46,7 @@ async def write_file_content(file_path: str, content: str) -> None:
 
 
 @safe_call
-async def append_file_content(file_path: str, content: str) -> None:
+async def append_file_content(file_path: str, content: str) -> Safe[None]:
     """
     Appends content to a file.
 
@@ -58,7 +59,7 @@ async def append_file_content(file_path: str, content: str) -> None:
 
 
 @safe_call
-async def delete_file(file_path: str) -> None:
+async def delete_file(file_path: str) -> Safe[None]:
     """
     Deletes a file.
 
@@ -69,7 +70,7 @@ async def delete_file(file_path: str) -> None:
 
 
 @safe_call
-async def file_exists(file_path: str) -> bool:
+async def file_exists(file_path: str) -> Safe[bool]:
     """
     Checks if a file exists.
 
@@ -83,7 +84,7 @@ async def file_exists(file_path: str) -> bool:
 
 
 @safe_call
-async def get_file_stats(file_path: str) -> dict:
+async def get_file_stats(file_path: str) -> Safe[dict]:
     """
     Gets the statistics of a file.
 
@@ -110,30 +111,24 @@ async def get_file_stats(file_path: str) -> dict:
 
 @safe_call
 async def execute_code(
-    code: str, exec_type: Literal["eval", "exec"] = "exec"
-) -> str | ErrorDict | None:
+    code: str, dependencies: list[str] | None = None, **options
+) -> Safe[Union[RunSuccess, RunError]]:
     """
     Executes a script and returns the output.
 
     Args:
         code (str): The code to execute.
-        exec_type (Literal["eval", "exec"]): The type of execution, either 'eval' or 'exec'.
-
+        dependencies (list[str] | None): List of dependencies to install.
+        **options: Additional options to pass to the code by user.
     Returns:
-        str: The output of the code execution.
+        Union[RunSuccess, RunError]: The output of the code execution.
     """
-    match exec_type:
-        case "exec":
-            exec(code)
-        case "eval":
-            return str(eval(code))
-        case _:
-            return "Invalid exec_type. Use 'exec' or 'eval'."
-    return None
+    async with code_sandbox(dependencies=dependencies, **options) as interpreter:
+        return await interpreter.eval(code)
 
 
 @safe_call
-async def execute_script(script: str) -> str:
+async def execute_script(script: str) -> Safe[str]:
     """
     Executes a script and returns the output.
 
@@ -151,7 +146,7 @@ async def execute_script(script: str) -> str:
 
 
 @safe_call
-async def make_dir(dir_path: str) -> None:
+async def make_dir(dir_path: str) -> Safe[None]:
     """
     Creates a directory.
 
@@ -162,7 +157,7 @@ async def make_dir(dir_path: str) -> None:
 
 
 @safe_call
-async def list_files(dir_path: str) -> list[tuple[str, bool]]:
+async def list_files(dir_path: str) -> Safe[list[tuple[str, bool]]]:
     """
     Lists all files in a directory.
 
@@ -180,7 +175,7 @@ async def list_files(dir_path: str) -> list[tuple[str, bool]]:
 
 
 @safe_call
-async def rm_dir(dir_path: str) -> None:
+async def rm_dir(dir_path: str) -> Safe[None]:
     """
     Removes a directory.
 
@@ -202,7 +197,7 @@ async def rm_dir(dir_path: str) -> None:
 
 
 @safe_call
-def time_diff_prettify(diff: int) -> str:
+def time_diff_prettify(diff: int) -> Safe[str]:
     """
     Converts a time difference in seconds to a human-readable format.
 
