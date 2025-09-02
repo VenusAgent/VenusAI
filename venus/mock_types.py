@@ -1,4 +1,5 @@
-from typing import Callable, Union
+import abc
+from typing import Generic
 
 from attrobj import Object
 
@@ -7,17 +8,15 @@ from .types import Agent, Deps, ReturnType
 VenusCode = Agent  # Alias for Agent, used in decorators
 
 
-class BaseWrapper:
+class BaseWrapper(abc.ABC):
     """
     Base wrapper class for decorators.
     """
-
     pass
 
 
-class ToolWrapper(BaseWrapper):
+class ToolFunc(BaseWrapper, Generic[ReturnType]):
     """
-    Wrapper for tool decorator.
     This is used to mark the function as a tool.
     """
 
@@ -25,29 +24,7 @@ class ToolWrapper(BaseWrapper):
     iscoro: bool
     context_tool: bool
 
-
-class SafeCallWrapper(ToolWrapper):
-    """
-    Wrapper for safe_call decorator.
-    This is used to mark the function as a safe call.
-    """
-
-    mcp_tool: bool
-    safe_call: bool
-
-
-class AutofixWrapper(ToolWrapper):
-    """
-    Wrapper for autofix decorator.
-    This is used to mark the function as an autofix.
-    """
-
-    autofix: bool
-    fix_agent: VenusCode
-    autofix_options: Object
-
-
-class MCPToolWrapper(BaseWrapper):
+class MCPTool(BaseWrapper, Generic[ReturnType]):
     """
     Wrapper for mcp_tool decorator.
     This is used to mark the function as an MCP tool.
@@ -57,8 +34,22 @@ class MCPToolWrapper(BaseWrapper):
     iscoro: bool
     mcp_tool: bool
 
+class SafeFunction(ToolFunc, Generic[ReturnType]):
+    """
+    Wrapper for safe_call decorator.
+    This is used to mark the function as a safe call.
+    """
 
-ToolFunc = Union[ToolWrapper, Callable[..., ReturnType]]
-Autofix = Union[AutofixWrapper, Callable[..., ReturnType]]
-MCPTool = Union[MCPToolWrapper, Callable[..., ReturnType]]
-SafeFunction = Union[SafeCallWrapper, Callable[..., ReturnType]]
+    mcp_tool: bool
+    safe_call: bool
+
+
+class Autofix(ToolFunc, Generic[ReturnType]):
+    """
+    Wrapper for autofix decorator.
+    This is used to mark the function as an autofix.
+    """
+
+    autofix: bool
+    fix_agent: VenusCode
+    autofix_options: Object
