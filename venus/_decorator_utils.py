@@ -12,10 +12,10 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Callable, ParamSpec, TypeVar, Union, get_type_hints
 
+from venus.mock_types import Autofix
+
 from attrobj import Object
 from pydantic_ai import StructuredDict
-
-from venus.mock_types import Autofix
 
 from .errors import (ContextParamDuplicated, ErrorDict, InvalidContextParam,
                      InvalidDependencyParam, MainBlockNotFound)
