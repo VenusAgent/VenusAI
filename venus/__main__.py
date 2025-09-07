@@ -10,6 +10,7 @@ import sys
 from typing import Any, cast
 
 import click
+import logfire
 import uvicorn
 from fasta2a import FastA2A
 
@@ -56,6 +57,14 @@ def main():
     This function initializes and starts the command-line interface.
     """
     pass
+
+
+@main.command()
+def version():
+    """Display the current version of Venus."""
+    from . import __version__
+
+    vc.info(f"Venus version: {__version__}")
 
 
 @main.command()
