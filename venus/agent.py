@@ -11,12 +11,12 @@ from pathlib import Path
 from typing import (Any, Callable, Dict, Generic, Literal, Optional, Sequence,
                     TypeVar, Union, cast, get_type_hints, overload)
 
-import logfire
 import tinydb
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import APIRouter as Router
 from fastapi import FastAPI as Server
+
 from pydantic_ai import Agent, EndStrategy
 from pydantic_ai import _system_prompt as _system_prompt
 from pydantic_ai._agent_graph import HistoryProcessor
@@ -57,9 +57,6 @@ NoneType = type(None)
 
 vc = VenusConsole()
 settings = Settings()
-
-logfire.configure(console=logfire.ConsoleOptions(show_project_link=False))
-logfire.instrument_pydantic_ai()
 
 httpx_logger = logging.getLogger("httpx")
 httpx_logger.disabled = True
