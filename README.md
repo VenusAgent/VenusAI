@@ -101,7 +101,12 @@ Install latest NodeJS with npx for Claude Desktop HTTP support.
 from venus import Venus
 from venus.errors import ErrorDict
 from venus.types import Deps, DepsT, ModelRetry, RunContext
+
 import hashlib
+import logfire
+
+logfire.configure(console=logfire.ConsoleOptions(show_project_link=False))
+logfire.instrument_pydantic_ai()
 
 agent = Venus("grok:grok-3", deps_type=int)
 
