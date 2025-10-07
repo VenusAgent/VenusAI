@@ -33,7 +33,7 @@ jobs:
         source venv/bin/activate
         python -m build
 
-    - name: Publish to TestPyPI
+    - name: Publish to PyPI
       env:
         PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
       run: |

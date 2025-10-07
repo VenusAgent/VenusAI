@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 
 import dotenv
-import e2b
 from e2b_code_interpreter import Sandbox
 
 sys.path.insert(0, os.getcwd())
@@ -49,5 +48,5 @@ def load_sandbox_config():
 
 try:
     sandbox = Sandbox.create(**load_sandbox_config())
-except e2b.exceptions.SandboxException:
+except:
     sandbox = None

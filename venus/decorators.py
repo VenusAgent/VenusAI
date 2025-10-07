@@ -36,9 +36,10 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
 
     @wraps(func)
     async def async_wrapper(*args, **kwargs):
+        args = tuple(process_deps(args, func))
         try:
-            new_args = process_deps(args, func)
-            return await func(*new_args, **kwargs)
+            vc.log("Running function safely")
+            return await func(*args, **kwargs)
         except:
             _, exc_value, traceback = sys.exc_info()
             frame = get_frame(traceback, exc_value)
@@ -47,6 +48,7 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
                 exception=pretty_exc,
                 function=frame.f_code.co_name,
                 frame_info=get_frame_info(frame),
+                call_stack=[args, kwargs],
             )
             handlers = cast(
                 dict[str, dict[str, Callable[..., None]]], getattr(func, "handlers", {})
@@ -68,10 +70,10 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
 
     @wraps(func)
     def sync_wrapper(*args, **kwargs):
+        args = tuple(process_deps(args, func))
         try:
             vc.log("Running function safely")
-            new_args = process_deps(args, func)
-            return func(*new_args, **kwargs)
+            return func(*args, **kwargs)
         except:
             _, exc_value, traceback = sys.exc_info()
             frame = get_frame(traceback, exc_value)
@@ -80,6 +82,7 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
                 exception=pretty_exc,
                 function=frame.f_code.co_name,
                 frame_info=get_frame_info(frame),
+                call_stack=[args, kwargs],
             )
             handlers = getattr(func, "handlers", {})
             if handlers:

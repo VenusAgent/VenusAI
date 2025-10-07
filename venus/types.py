@@ -8,17 +8,15 @@ from typing import (Any, Awaitable, Callable, Generic, Literal, ParamSpec,
                     TypeAlias, TypeVar, Union, cast, get_origin,
                     get_type_hints)
 
-from pydantic import TypeAdapter
-from pydantic_core.core_schema import AnySchema, any_schema
-
 from attrobj import Object
+from pydantic import TypeAdapter
 from pydantic_ai import ModelRetry
 from pydantic_ai._run_context import AgentDepsT, RunContext
 from pydantic_ai.agent import Agent
 from pydantic_ai.mcp import (MCPServerSSE, MCPServerStdio,
                              MCPServerStreamableHTTP)
 from pydantic_ai.models import KnownModelName
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.profiles import ModelProfile
 from pydantic_ai.providers.grok import GrokProvider
@@ -26,6 +24,7 @@ from pydantic_ai.providers.openai import OpenAIProvider, Provider
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.tools import ToolDefinition
 from pydantic_ai.toolsets import FunctionToolset
+from pydantic_core.core_schema import AnySchema, any_schema
 
 ReturnType = TypeVar("ReturnType")
 FuncParams = ParamSpec("FuncParams")
@@ -183,6 +182,14 @@ class Deps(Object, Generic[DepsT]):
             AnySchema: The Pydantic core schema for the Deps object.
         """
         return any_schema()
+
+
+class CacheDeps(Deps[DepsT]):
+    """
+    Cached dependency environment.
+    """
+
+    pass
 
 
 def __getattr__(name: str) -> Entity:

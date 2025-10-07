@@ -6,12 +6,14 @@ import asyncio
 from typing import Literal, TypeVar, Union
 
 from ...decorators import safe_call
+from ...logger import VenusConsole
 from ...types import FunctionToolset, Safe
 from ._client import _request_timeout, sandbox
 
 request_timeout = _request_timeout or 10
 
 T = TypeVar("T")
+console = VenusConsole()
 
 
 def format(value: T) -> Union[T, str]:
@@ -124,15 +126,20 @@ async def execute_code(code: str, timeout: int = 10) -> Safe[T]:
     return format(await asyncio.to_thread(sandbox.run_code, code, timeout=timeout))
 
 
-tools = [
-    write_file_content,
-    read_file_content,
-    execute_code,
-    rename_file,
-    file_exists,
-    list_files,
-    make_dir,
-    rm_dir,
-]
+if sandbox is None:
+    console.log("Invalid E2B_API_KEY found. Please use a valid api key.")
+    tools = []
+    e2b_toolset = FunctionToolset(tools=tools, id="e2b")
+else:
+    tools = [
+        write_file_content,
+        read_file_content,
+        execute_code,
+        rename_file,
+        file_exists,
+        list_files,
+        make_dir,
+        rm_dir,
+    ]
 
-e2b_toolset = FunctionToolset(tools=tools, id="e2b")
+    e2b_toolset = FunctionToolset(tools=tools, id="e2b")

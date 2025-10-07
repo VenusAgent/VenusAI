@@ -10,12 +10,15 @@ from ._decorator_utils import makekey
 from .types import CacheManagerType, CacheTypes, CallableType, ReturnType
 
 try:
-    import aiocache
-    import async_lru
-    import cachetools
+    from aiocache import Cache as AIOCache
+    from aiocache import cached as acached
+    from async_lru import alru_cache
+    from cachetools import (Cache, FIFOCache, LFUCache, LRUCache, RRCache,
+                            TLRUCache, TTLCache, cached)
+    from cachetools.keys import hashkey
 except ImportError as e:
     raise ImportError(
-        'Can not import cache modules! Install using `uv add "venai[cache]"`'
+        "Can not import cache modules! Install using `uv add venai`"
     ) from e
 
 
@@ -54,20 +57,17 @@ def cached(
     def decorator(
         func: CallableType,
     ) -> CachedFuncContext[
-        typing.Callable[..., ReturnType], typing.Union[aiocache.Cache, cachetools.Cache]
+        typing.Callable[..., ReturnType], typing.Union[AIOCache, Cache]
     ]:
         if inspect.iscoroutinefunction(func):
             if cache_type == "async-lru":
-                cache = async_lru.alru_cache(maxsize=maxsize, typed=typed, ttl=ttl)(
-                    func
-                )
+                cache = alru_cache(maxsize=maxsize, typed=typed, ttl=ttl)(func)
                 cache.clear = cache.cache_clear
                 cache.cache = cache
                 return cache
 
             cachekey = key() if callable(key) else key
             try:
-                from aiocache import cached as acached
 
                 return acached(ttl=ttl, key=cachekey or makekey(fn), **options)(func)
             except ImportError as e:
@@ -77,9 +77,6 @@ def cached(
                 ) from e
         else:
             try:
-                from cachetools import (FIFOCache, LFUCache, LRUCache, RRCache,
-                                        TLRUCache, TTLCache, cached)
-                from cachetools.keys import hashkey
 
                 cachekey = (
                     key

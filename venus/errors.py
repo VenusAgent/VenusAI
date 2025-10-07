@@ -1,3 +1,5 @@
+import hashlib
+import time
 from typing import Any, Optional, TypeVar, Union
 
 from pydantic import BaseModel
@@ -40,6 +42,7 @@ class ErrorDict(BaseModel):
     function: Optional[str] = None
     exception: Optional[str] = "An error occurred"
     frame_info: Optional[FrameInfo] = None
+    call_stack: Optional[list] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -98,6 +101,32 @@ class ErrorDict(BaseModel):
             f"Error occured in `{self.function}`: {self.exception} at {self.location}.\n"
             f"Code context: {self.context}"
         )
+
+    @property
+    def call_id(self):
+        args = self.call_stack[0]
+        kwargs = self.call_stack[1]
+        if "RunContext" in str(args[0]):
+            args = args[1:]
+        sig = f"{self.function}:({args}:{kwargs})"
+        return hashlib.sha256(sig.encode()).hexdigest()
+
+    @property
+    def trace_id(self):
+        """
+        Unique hash of function and traceback.
+        """
+        sig = f"{self.function}:{self.exception}"
+        return hashlib.sha256(sig.encode()).hexdigest()
+
+    @property
+    def unique_id(self):
+        """
+        Unique hash of entire tool call and function state.
+        """
+        ts = int(time.time())
+        sig = f"{self.context}:{self.location}:{self.call_id}:{self.trace_id}:{ts}"
+        return hashlib.sha256(sig.encode()).hexdigest()
 
 
 T = TypeVar("T", bound=BaseModel | Any)

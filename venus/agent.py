@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import inspect
 import json
 import logging
@@ -16,7 +17,6 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import APIRouter as Router
 from fastapi import FastAPI as Server
-
 from pydantic_ai import Agent, EndStrategy
 from pydantic_ai import _system_prompt as _system_prompt
 from pydantic_ai._agent_graph import HistoryProcessor
@@ -27,7 +27,7 @@ from pydantic_ai.builtin_tools import AbstractBuiltinTool
 from pydantic_ai.mcp import MCPServer
 from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.openai import Model
-from pydantic_ai.output import OutputDataT, OutputSpec
+from pydantic_ai.output import OutputDataT, OutputSpec, StructuredDict
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.tools import (Tool, ToolFuncContext, ToolFuncEither,
                                ToolFuncPlain, ToolParams)
@@ -41,7 +41,7 @@ from .errors import (ErrorDict, ExecutionNotAllowed, InvalidContextParam,
                      InvalidFunction, InvalidTool, InvalidTools)
 from .helpers import time_diff_prettify, tools
 from .logger import VenusConsole
-from .permissions import Permissions, get_allowed_tools
+from .permissions import Permission, get_allowed_tools
 from .prompts import CODING_PROMPT
 from .schemas import DoesNeedFix, FixFuncResult
 from .settings import Settings
@@ -51,7 +51,6 @@ from .types import Deps, FuncParams, ToolsPrepareFunc, _EnableFeature
 Agent module for building and configuring an agent with HTTP client support.
 """
 
-ToolName = str
 T = TypeVar("T")
 NoneType = type(None)
 
@@ -151,9 +150,11 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
             name=name or settings.agent_name,
             **options,
         )
+
         self.logger = VenusConsole()
         self.warnings = warnings
         self.fix_model = fix_model or settings.fix_model or model
+        self.autofix = functools.partial(self.safe, autofix=True)
 
         self._tool_modules = tool_modules
         self._tools = self.integrate_tools()
@@ -338,7 +339,6 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
 
         Do not use tool parameter if you don't have a `Tool` instance.
         """
-
         assert not json_schema or isinstance(json_schema, (str, dict)), ValueError(
             f"Expected 'json_schema' to be a str, dict, or None, got {type(json_schema).__name__!r}."
         )
@@ -461,7 +461,7 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
             self._fix_agent = VenusCode(
                 model=self.fix_model or self.model or settings.model_name,
                 system_prompt=settings.default_fix_prompt,
-                permission=Permissions.WRITE_APPEND,
+                permission=Permission.WRITE_APPEND,
             )
         return self._fix_agent
 
@@ -1115,66 +1115,6 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
         """
         pass
 
-    def autofix(
-        self,
-        func: Callable[ToolParams, T] | None = None,
-        /,
-        *,
-        name: str | None = None,
-        deps: Deps = Deps(),
-        retries: int | None = None,
-        strict: bool | None = None,
-        reload_function: bool = True,
-        **options,
-    ) -> Union[
-        ToolFuncContext,
-        Callable[[Callable[ToolParams, T]], ToolFuncContext],
-    ]:
-        """
-        Decorator to automatically fix a function using the fix agent.
-
-        This decorator registers the function as a tool that will be automatically fixed
-        using the fix agent if it encounters issues during execution. It supports both
-        context-aware and plain functions.
-
-        Args:
-            func (Callable[ToolParams, T]): The function to register as a tool. Optional if used as a decorator.
-            name (str, optional): The name of the tool. Defaults to the function's name.
-            deps (Deps, optional): Dependencies to inject into the function. Defaults to an empty Deps object.
-            retries (int, optional): The number of retries for the tool function. Defaults to None.
-            strict (bool, optional): Whether to enforce strict parameter checking. Defaults to None.
-            reload_function (bool, optional): Whether to reload the function after autofix. Defaults to True.
-            **options: Additional options for the tool.
-
-        Returns:
-            Union[ToolFuncContext, Callable]: The registered tool or a decorator function if `func` is not provided.
-
-        Raises:
-            InvalidContextParam: If the function is context-aware but lacks a `RunContext` parameter.
-        """
-        reload_function = options.pop("reload", None) or reload_function
-
-        def decorator(func: Callable[ToolParams, T]) -> ToolFuncContext:
-            context_tool = True
-            try:
-                has_context_param(func)
-            except (AssertionError, InvalidContextParam):
-                context_tool = False
-            safe_wrapper = self.safe if context_tool else self.safe_plain
-
-            return safe_wrapper(
-                func=func,
-                name=name,
-                deps=deps,
-                strict=strict,
-                retries=retries,
-                autofix=True,
-                reload_function=reload_function,
-                **options,
-            )
-
-        return decorator(func) if func is not None else decorator
-
     @asynccontextmanager
     async def with_mcp_servers(self, mcp_servers: list[MCPServer] = []):
         self._user_toolsets += tuple(mcp_servers)
@@ -1203,7 +1143,7 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
         fix_model (Model | KnownModelName | None): The model to use for fixing code.
         sandbox (bool): Whether to run code in a sandbox environment. Default is False.
         warnings (bool): Whether to show warnings. Default is True.
-        permission (Permissions): The permission for the agent. Default is READ_WRITE.
+        permission (Permission): The permission for the agent. Default is READ_WRITE.
         sandbox_e2b (bool): Whether to use the e2b sandbox environment. Default is False.
         execution_allowed (bool): Whether code execution is allowed. Default is False.
         coding_prompt (str | None): The custom coding prompt to use, if provided.
@@ -1219,17 +1159,18 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
         model: Model | KnownModelName | None = None,
         fix_model: Model | KnownModelName | None = None,
         sandbox: bool = False,
+        e2b_sandbox: bool = False,
         warnings: bool = True,
-        sandbox_e2b: bool = False,
-        permitter: Callable[[Union[Permissions, int]], list[str]] = get_allowed_tools,
-        permission: Permissions = Permissions.READ_WRITE,
+        permitter: Callable[[Union[Permission, int]], list[str]] = get_allowed_tools,
+        permission: Permission = Permission.READ_WRITE,
         execution_allowed: bool = False,
         coding_prompt: str | None = None,
         **options,  # options for passing to Venus ctor
     ):
         load_dotenv(override=options.pop("override_env", False))
 
-        execution_allowed = execution_allowed or (permission & Permissions.EXECUTE)
+        e2b_sandbox = e2b_sandbox or sandbox
+        execution_allowed = execution_allowed or (permission & Permission.EXECUTE)
 
         name = options.pop("name", settings.agent_name)
         coding_tools = options.pop("tools", []) or tools
@@ -1256,7 +1197,7 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
 
         if coding_prompt != CODING_PROMPT and warnings:
             vc.log(
-                "Before using new coding prompt, see default prompt at `venus.prompts.CODING_PROMPT`",
+                "Before using new coding prompt, see default prompt at `venus.CODING_PROMPT`",
                 bold=True,
             )
             coding_prompt = CODING_PROMPT
@@ -1266,7 +1207,7 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
 
         coding_tools = [t for t in coding_tools if t.__name__ in allowed_tools]
 
-        if not permission & Permissions.WRITE:
+        if not permission & Permission.WRITE:
             system_prompt += "You are not allowed to write files. "
 
         elif not execution_allowed:
@@ -1285,13 +1226,13 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
 
         self._execution_allowed = execution_allowed
 
-        if (sandbox or sandbox_e2b) and not execution_allowed:
+        if e2b_sandbox and not execution_allowed:
             raise ExecutionNotAllowed(
                 "Sandbox mode is enabled but code execution is not allowed. "
                 "Please set `execution_allowed=True` to use sandbox mode."
             )
 
-        if sandbox_e2b and execution_allowed:
+        if e2b_sandbox and execution_allowed:
             self.tools.clear()
             self._integrate_tool("venus.helpers.e2b")
 

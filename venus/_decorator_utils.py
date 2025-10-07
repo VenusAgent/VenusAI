@@ -12,17 +12,16 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Callable, ParamSpec, TypeVar, Union, get_type_hints
 
-from venus.mock_types import Autofix
-
 from attrobj import Object
 from pydantic_ai import StructuredDict
 
 from .errors import (ContextParamDuplicated, ErrorDict, InvalidContextParam,
                      InvalidDependencyParam, MainBlockNotFound)
 from .logger import VenusConsole
+from .mock_types import Autofix
 from .schemas import FixFuncResult
 from .settings import settings
-from .types import Deps, ReturnType, RunContext, get_base_type
+from .types import CacheDeps, Deps, ReturnType, RunContext, get_base_type
 
 DepsT = TypeVar("DepsT")
 Param = ParamSpec("Param")
@@ -502,7 +501,7 @@ def extract_function_body(func: Callable[..., Any]) -> str:
     return "".join(source_lines[header_length:])
 
 
-def handle_deps(deps: Deps):
+def handle_deps(func):
     """
     Handle dependencies for the agent.
 
@@ -513,9 +512,18 @@ def handle_deps(deps: Deps):
         Deps: The processed dependencies.
     """
     _output_deps = Deps()
-    for k, v in deps.items():
-        if callable(v):
+    is_cached = isinstance(func.deps, CacheDeps)
+    cache_exists = getattr(func, "cache_deps", None)
+    for k, v in func.deps.items():
+        if is_cached:
+            if cache_exists:
+                _output_deps[k] = func.cache_deps[k]
+            else:
+                func.cache_deps = CacheDeps()
+        if callable(v) and k not in _output_deps:
             _output_deps[k] = safe_run(v)
+            if is_cached:
+                func.cache_deps[k] = _output_deps[k]
     return _output_deps
 
 
@@ -533,7 +541,7 @@ def process_deps(args: tuple, func: Callable[..., ReturnType]) -> tuple[RunConte
         tooldeps = Deps()
         if ctx := args[0] if args else None:
             ctx.deps = Deps({"main": ctx.deps}) if ctx.deps else Deps()
-            tooldeps = handle_deps(func.deps)
+            tooldeps = handle_deps(func)
             ctx.deps.update(tooldeps)
             ctx.deps.update({type(v): v for _, v in tooldeps.items()})
     return args

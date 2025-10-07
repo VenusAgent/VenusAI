@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "venai"
-version = "1.28.8"
+version = "1.28.9"
 description = "VenusAI is a secure and extensible Agent framework built for modern AI applications."
 readme = "README.md"
 requires-python = ">=3.10"

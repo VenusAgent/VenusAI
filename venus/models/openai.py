@@ -8,7 +8,7 @@ from ..agent import Venus, VenusCode
 from ..errors import InvalidParameter, InvalidProvider, ProviderConflict
 from ..settings import Settings
 from ..types import (GrokProvider, KnownModelName, ModelProfile, ModelSettings,
-                     OpenAIModel, OpenAIProvider, Provider)
+                     OpenAIChatModel, OpenAIProvider, Provider)
 
 dotenv.load_dotenv()
 
@@ -69,11 +69,11 @@ class OpenAI(VenusCode):
             base_url=base_url, api_key=api_key, **options if not init else {}
         )
 
-        self.model = OpenAIModel(
+        self.model = OpenAIChatModel(
+            profile=profile,
             model_name=model_name,
             provider=self.provider,
             settings=model_settings,
-            profile=profile,
         )
 
         if init:

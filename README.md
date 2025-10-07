@@ -100,7 +100,7 @@ Install latest NodeJS with npx for Claude Desktop HTTP support.
 ```python
 from venus import Venus
 from venus.errors import ErrorDict
-from venus.types import Deps, DepsT, ModelRetry, RunContext
+from venus.types import CacheDeps, Deps, DepsT, ModelRetry, RunContext
 
 import hashlib
 import logfire
@@ -145,6 +145,10 @@ async def add_money(ctx: RunContext[Bank[int]], fund: int):
     print(f"Hash for transaction: {tx_hash}")
     
     return ctx.deps.reserve
+
+@agent.safe(deps=CacheDeps(id=lambda: 7))
+async def test(ctx: RunContext[CacheDeps]):
+    return ctx.deps.id
 ```
 
 **Run:**
@@ -231,17 +235,17 @@ print(result.output)
 
 ```python
 from venus import VenusCode
-from venus.permissions import Permissions
+from venus.permissions import Permission
 from venus.helpers.io import io_toolset
 
 def my_permitter(permission: int):
-    if not permission & Permissions.EXECUTE and permission & Permissions.READ:
+    if not permission & Permission.EXECUTE and permission & Permission.READ:
         return ["read_file_content"]
     return list(io_toolset.tools.keys())
 
 code_agent = VenusCode(
     name="coder",
-    permission=Permissions.READ_EXECUTE,
+    permission=Permission.READ_EXECUTE,
     permitter=my_permitter,  # do not set a permitter to use default permitter
 )
 ```

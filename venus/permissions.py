@@ -5,7 +5,7 @@ Permissions module for the Venus agent.
 from enum import IntFlag
 
 
-class Permissions(IntFlag):
+class Permission(IntFlag):
     """
     Permissions for file operations.
     """
@@ -41,10 +41,10 @@ def get_allowed_tools(permissions: int) -> list[str]:
     """
     allowed_tools = {"time_diff_prettify"}
 
-    if permissions & Permissions.READ:
+    if permissions & Permission.READ:
         allowed_tools.update({"read_file_content"})
 
-    if permissions & Permissions.WRITE:
+    if permissions & Permission.WRITE:
         allowed_tools.update(
             {
                 "append_file_content",
@@ -59,16 +59,16 @@ def get_allowed_tools(permissions: int) -> list[str]:
             }
         )
 
-    if permissions & Permissions.APPEND:
+    if permissions & Permission.APPEND:
         allowed_tools.update({"append_file_content"})
 
-    if permissions & Permissions.EXECUTE:
+    if permissions & Permission.EXECUTE:
         allowed_tools.update({"execute_code", "execute_script"})
 
-    if permissions & Permissions.CHECK:
+    if permissions & Permission.CHECK:
         allowed_tools.update({"file_exists", "get_file_stats", "list_files"})
 
-    if permissions == Permissions.ALL:
+    if permissions == Permission.ALL:
         allowed_tools.update(
             {
                 "append_file_content",
@@ -86,3 +86,8 @@ def get_allowed_tools(permissions: int) -> list[str]:
         )
 
     return sorted(allowed_tools)
+
+
+# Backward compatibility
+# Remove after v1.29.0
+Permissions = Permission
