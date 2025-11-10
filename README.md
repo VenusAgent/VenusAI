@@ -3,6 +3,7 @@
 VenusAI is a **secure and extensible Agent framework** built for modern AI applications.
 It offers **dynamic tool management**, **powerful decorators**, **advanced caching**, **robust error handling**, a built-in **CLI**, and seamless **Claude MCP integration**.
 
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/venai?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/venai) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/VenusAgent/VenusAI)
 ---
 ## Installation
 
