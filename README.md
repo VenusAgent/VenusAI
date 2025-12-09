@@ -71,8 +71,8 @@ Install latest NodeJS with npx for Claude Desktop HTTP support.
 
 * **Decorators**
 
-  * `@agent.safe` → error-safe wrapper for non-context tools
-  * `@agent.safe_plain` → error-safe wrapper for context tools
+  * `@agent.safe` → error-safe wrapper for context tools
+  * `@agent.safe_plain` → error-safe wrapper for non-context tools
   * `@agent.autofix` → self-healing tools (functions can fix themselves)
   * `@agent.on_error` → custom error handler
 
