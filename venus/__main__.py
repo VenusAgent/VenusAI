@@ -10,7 +10,6 @@ import sys
 from typing import Any, cast
 
 import click
-import logfire
 import uvicorn
 from fasta2a import FastA2A
 
@@ -155,7 +154,7 @@ def mcp(
             configure_claude=configure,
             **config_dict,
         )
-    except:
+    except Exception:
         vc.print_exception(show_locals=True, max_frames=2)
         return vc.fail("An error occured during MCP configuration.")
 

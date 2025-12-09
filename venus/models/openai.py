@@ -7,8 +7,15 @@ import dotenv
 from ..agent import Venus, VenusCode
 from ..errors import InvalidParameter, InvalidProvider, ProviderConflict
 from ..settings import Settings
-from ..types import (GrokProvider, KnownModelName, ModelProfile, ModelSettings,
-                     OpenAIChatModel, OpenAIProvider, Provider)
+from ..types import (
+    GrokProvider,
+    KnownModelName,
+    ModelProfile,
+    ModelSettings,
+    OpenAIChatModel,
+    OpenAIProvider,
+    Provider,
+)
 
 dotenv.load_dotenv()
 

@@ -16,12 +16,15 @@ sys.path.insert(0, os.getcwd())
 dotenv.load_dotenv(Path(os.getcwd()) / ".env")
 
 _request_timeout = int(os.environ.get("REQUEST_TIMEOUT", 0))
+e2b_enabled = os.environ.get("E2B_ENABLED", "0") == "1"
 
 
 def load_sandbox_config():
     """
     Load sandbox configuration from JSON file.
     """
+    if not e2b_enabled:
+        return {}
     config_path = Path("./.e2b/sandbox_config.json")
 
     if not config_path.exists():
@@ -33,7 +36,6 @@ def load_sandbox_config():
         default_config["api_key"] = os.environ.get("E2B_API_KEY")
         default_config["domain"] = None
         config_path.write_text(json.dumps({"config": default_config}, indent=4))
-        print(f"Created default sandbox config at {config_path}")
         return {}
     try:
         config: dict = json.loads(config_path.read_text(encoding="utf-8")).get(
@@ -48,5 +50,5 @@ def load_sandbox_config():
 
 try:
     sandbox = Sandbox.create(**load_sandbox_config())
-except:
+except Exception:
     sandbox = None

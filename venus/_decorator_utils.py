@@ -12,16 +12,20 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Callable, ParamSpec, TypeVar, Union, get_type_hints
 
-from attrobj import Object
 from pydantic_ai import StructuredDict
 
-from .errors import (ContextParamDuplicated, ErrorDict, InvalidContextParam,
-                     InvalidDependencyParam, MainBlockNotFound)
+from .errors import (
+    ContextParamDuplicated,
+    ErrorDict,
+    InvalidContextParam,
+    InvalidDependencyParam,
+    MainBlockNotFound,
+)
 from .logger import VenusConsole
 from .mock_types import Autofix
 from .schemas import FixFuncResult
 from .settings import settings
-from .types import CacheDeps, Deps, ReturnType, RunContext, get_base_type
+from .types import CacheDeps, Deps, Object, ReturnType, RunContext, get_base_type
 
 DepsT = TypeVar("DepsT")
 Param = ParamSpec("Param")

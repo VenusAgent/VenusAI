@@ -11,6 +11,8 @@ Install library via pip or uv.
 
 > Note: The venusai is alias of venai, you can use both but venai is the main package.
 
+> For using E2B sandbox; set variables `E2B_ENABLED=1`, `E2B_API_KEY=<API_KEY>` and use them as `VenusCode(e2b_sandbox=True)`
+
 ```bash
 pip install venai
 pip install venusai
@@ -172,6 +174,48 @@ venus serve agent:agent a2a --env dev
 > ✅ This example is complete and runnable as-is.
 
 ---
+
+### Setting fallback for return value
+
+```python
+from pydantic_ai import RunContext
+from venusai.venus import VenusCode
+from venusai.venus.errors import ErrorDict
+
+agent = VenusCode('groq:qwen/qwen3-32b')
+
+@agent.on_error
+def set_default(e: ErrorDict) -> str:
+    if e.function == "random_name":
+        return "Alice"
+    elif e.function == "random_age":
+        return "29"
+    return
+
+@agent.safe_plain
+def random_name() -> int:
+    raise NotImplementedError
+    # random_name should return Alice
+    # even if its raised an exception
+
+# here we wrap random_age with autofix
+# but because of returning default value
+# in error handler
+# it gonna skip autofix process
+
+@agent.autofix # or agent.safe/safe_plain
+def random_age(ctx: RunContext) -> int:
+    raise NotImplementedError
+    # random_age should return 29
+    # even if its raised an exception
+
+res = agent.run_sync("Give me random name and age", output_type=str)
+
+print(res.output)
+#> Name: Alice, Age: 29
+```
+
+> ✅ This example is complete and runnable as-is.
 
 ### 🔹 MCP (Model Context Protocol)
 

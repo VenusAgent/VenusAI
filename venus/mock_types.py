@@ -1,9 +1,7 @@
 import abc
 from typing import Generic
 
-from attrobj import Object
-
-from .types import Agent, Deps, ReturnType
+from .types import Agent, Deps, Object, ReturnType
 
 VenusCode = Agent  # Alias for Agent, used in decorators
 

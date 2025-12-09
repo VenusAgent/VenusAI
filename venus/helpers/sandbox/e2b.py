@@ -5,10 +5,12 @@ E2B Code Interpreter implementation for sandboxed code execution.
 import asyncio
 from typing import Literal, TypeVar, Union
 
+from pydantic_ai.toolsets import FunctionToolset
+
 from ...decorators import safe_call
 from ...logger import VenusConsole
-from ...types import FunctionToolset, Safe
-from ._client import _request_timeout, sandbox
+from ...types import Safe
+from ._client import _request_timeout, e2b_enabled, sandbox
 
 request_timeout = _request_timeout or 10
 
@@ -126,7 +128,7 @@ async def execute_code(code: str, timeout: int = 10) -> Safe[T]:
     return format(await asyncio.to_thread(sandbox.run_code, code, timeout=timeout))
 
 
-if sandbox is None:
+if sandbox is None and e2b_enabled:
     console.log("Invalid E2B_API_KEY found. Please use a valid api key.")
     tools = []
     e2b_toolset = FunctionToolset(tools=tools, id="e2b")

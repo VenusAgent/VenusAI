@@ -13,8 +13,16 @@ try:
     from aiocache import Cache as AIOCache
     from aiocache import cached as acached
     from async_lru import alru_cache
-    from cachetools import (Cache, FIFOCache, LFUCache, LRUCache, RRCache,
-                            TLRUCache, TTLCache, cached)
+    from cachetools import (
+        Cache,
+        FIFOCache,
+        LFUCache,
+        LRUCache,
+        RRCache,
+        TLRUCache,
+        TTLCache,
+        cached,
+    )
     from cachetools.keys import hashkey
 except ImportError as e:
     raise ImportError(
@@ -68,7 +76,6 @@ def cached(
 
             cachekey = key() if callable(key) else key
             try:
-
                 return acached(ttl=ttl, key=cachekey or makekey(fn), **options)(func)
             except ImportError as e:
                 raise ImportError(
@@ -77,7 +84,6 @@ def cached(
                 ) from e
         else:
             try:
-
                 cachekey = (
                     key
                     if callable(key)

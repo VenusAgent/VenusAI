@@ -5,17 +5,24 @@ Decorators for tool functions.
 import inspect
 import sys
 from functools import wraps
-from typing import Callable, Dict, List, Tuple, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
-from attrobj import Object
-
-from ._decorator_utils import (dep_name, fix, fix_sync, get_frame,
-                               get_frame_info, has_deps_param, is_context_tool,
-                               is_factory, process_deps, safe_run)
+from ._decorator_utils import (
+    dep_name,
+    fix,
+    fix_sync,
+    get_frame,
+    get_frame_info,
+    has_deps_param,
+    is_context_tool,
+    is_factory,
+    process_deps,
+    safe_run,
+)
 from .errors import ErrorDict
 from .logger import VenusConsole
 from .mock_types import Autofix, MCPTool, SafeFunction, ToolFunc
-from .types import Deps, ReturnType, _EnableFeature
+from .types import Deps, Object, ReturnType, _EnableFeature
 
 vc = VenusConsole()
 
@@ -38,9 +45,9 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
     async def async_wrapper(*args, **kwargs):
         args = tuple(process_deps(args, func))
         try:
-            vc.log("Running function safely")
+            vc.log(f"Running `{func.__name__}` function safely")
             return await func(*args, **kwargs)
-        except:
+        except Exception:
             _, exc_value, traceback = sys.exc_info()
             frame = get_frame(traceback, exc_value)
             pretty_exc = repr(exc_value.with_traceback(traceback))
@@ -51,7 +58,8 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
                 call_stack=[args, kwargs],
             )
             handlers = cast(
-                dict[str, dict[str, Callable[..., None]]], getattr(func, "handlers", {})
+                dict[str, dict[str, Callable[..., Optional[Any]]]],
+                getattr(func, "handlers", {}),
             )
             if handlers:
                 vc.log(
@@ -63,18 +71,28 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
                         f"Calling `{name}` handler for `{func.__name__}` function ...",
                         bold=True,
                     )
+                    result = None
                     maybe_coro = handler(error_data)
                     if inspect.isawaitable(maybe_coro):
-                        await maybe_coro
+                        result = await maybe_coro
+                    else:
+                        result = maybe_coro
+
+                    if result is not None:
+                        vc.log(
+                            f"Handler `{name}` returned a result, skipping fix.",
+                            bold=True,
+                        )
+                        return result
             return await fix(func=func, error_data=error_data, args=args, kwargs=kwargs)
 
     @wraps(func)
     def sync_wrapper(*args, **kwargs):
         args = tuple(process_deps(args, func))
         try:
-            vc.log("Running function safely")
+            vc.log(f"Running `{func.__name__}` function safely")
             return func(*args, **kwargs)
-        except:
+        except Exception:
             _, exc_value, traceback = sys.exc_info()
             frame = get_frame(traceback, exc_value)
             pretty_exc = repr(exc_value.with_traceback(traceback))
@@ -88,16 +106,25 @@ def safe_call(func: Callable[..., ReturnType]) -> SafeFunction[ReturnType]:
             if handlers:
                 vc.log(
                     f"Function {func.__name__} has handlers, calling them...",
-                    color="yellow",
+                    color="orange1",
+                    level_color="orange1",
                     bold=True,
                 )
+                result = None
                 for name, handler in handlers["errors"].items():
                     vc.log(
                         f"Calling handler {name} for function {func.__name__}...",
-                        color="yellow",
+                        color="orange1",
+                        level_color="orange1",
                         bold=True,
                     )
-                    safe_run(handler, error_data)
+                    result = safe_run(handler, error_data)
+                    if result is not None:
+                        vc.log(
+                            f"Handler `{name}` returned a result{', skipping fix.' if hasattr(func, 'autofix') else '.'}",
+                            bold=True,
+                        )
+                        return result
             return fix_sync(func=func, error_data=error_data, args=args, kwargs=kwargs)
 
     iscoro = inspect.iscoroutinefunction(func)

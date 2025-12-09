@@ -40,23 +40,18 @@ def import_module(
         )
     except Exception as exc:
         raise ModuleRaisedException(
-            f"Failed to import {tool_module} module "
-            "because module raised an exception."
+            f"Failed to import {tool_module} module because module raised an exception."
         ) from exc
 
-    if load_all:
-        condition = (
-            lambda x: (
-                getattr(getattr(module, x), "tool", None)
-                or getattr(getattr(module, x), "mcp_tool", None)
-            )
-            == _EnableFeature
-        )
-    else:
+    def condition(x: str) -> bool:
+        obj = getattr(module, x)
+        if load_all:
+            return (
+                getattr(obj, "tool", None) or getattr(obj, "mcp_tool", None)
+            ) == _EnableFeature
+
         attr_name = "mcp_tool" if mcp_tool else "tool"
-        condition = (
-            lambda x: getattr(getattr(module, x), attr_name, None) == _EnableFeature
-        )
+        return getattr(obj, attr_name, None) == _EnableFeature
 
     tool_names = [
         name

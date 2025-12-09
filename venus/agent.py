@@ -9,8 +9,20 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import (Any, Callable, Dict, Generic, Literal, Optional, Sequence,
-                    TypeVar, Union, cast, get_type_hints, overload)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Literal,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+    get_type_hints,
+    overload,
+)
 
 import tinydb
 import uvicorn
@@ -29,16 +41,27 @@ from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.openai import Model
 from pydantic_ai.output import OutputDataT, OutputSpec, StructuredDict
 from pydantic_ai.settings import ModelSettings
-from pydantic_ai.tools import (Tool, ToolFuncContext, ToolFuncEither,
-                               ToolFuncPlain, ToolParams)
+from pydantic_ai.tools import (
+    Tool,
+    ToolFuncContext,
+    ToolFuncEither,
+    ToolFuncPlain,
+    ToolParams,
+)
 from pydantic_ai.toolsets import AbstractToolset, ToolsetFunc
 
 from . import decorators
 from ._decorator_utils import extract_function_body, has_context_param
 from ._module_utils import import_module
 from .decorators import is_context_tool, safe_call
-from .errors import (ErrorDict, ExecutionNotAllowed, InvalidContextParam,
-                     InvalidFunction, InvalidTool, InvalidTools)
+from .errors import (
+    ErrorDict,
+    ExecutionNotAllowed,
+    InvalidContextParam,
+    InvalidFunction,
+    InvalidTool,
+    InvalidTools,
+)
 from .helpers import time_diff_prettify, tools
 from .logger import VenusConsole
 from .permissions import Permission, get_allowed_tools
@@ -720,7 +743,7 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
 
         self._handlers["errors"][func.__name__] = func
 
-        vc.log(f"{func.__name__!r} error handler registered")
+        vc.log(f"Error handler for `{func.__name__}` function has registered.")
 
     def set_fix_agent(self, fix_agent: "VenusCode") -> None:
         """
@@ -965,6 +988,7 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
         retries: int | None = None,
         strict: bool | None = None,
         autofix: bool = False,
+        fix_now: bool = False,
         reload_function: bool = True,
         **options,
     ) -> Callable[[Callable[ToolParams, T]], ToolFuncContext[None, ToolParams]]:
@@ -980,9 +1004,12 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
 
         Args:
             name (str): The name of the tool.
+            deps (Deps): The dependencies for the tool function.
             retries (int): The number of retries for the tool function.
             strict (bool): Whether to enforce strict parameter checking.
             autofix (bool): Whether to automatically fix the function errors.
+            fix_now (bool): Whether to fix the function immediately after registration.
+            reload_function (bool): Whether to reload the function after autofix.
             **options: Additional options for the tool.
 
         Returns:
@@ -1000,6 +1027,7 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
         retries: int | None = None,
         strict: bool | None = None,
         autofix: bool = False,
+        fix_now: bool = False,
         reload_function: bool = True,
         **options,
     ) -> Union[
@@ -1018,6 +1046,7 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
             retries (int): The number of retries for the tool function.
             strict (bool): Whether to enforce strict parameter checking.
             autofix (bool): Whether to automatically fix the function errors.
+            fix_now (bool): Whether to fix the function immediately after registration.
             **options: Additional options for the tool.
 
         Returns:
@@ -1032,7 +1061,8 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
         ) -> ToolFuncContext[None, ToolParams]:
             if autofix:
                 func = decorators.autofix(func=func, reload_function=reload_function)
-                self.fix(func)
+                if fix_now:
+                    self.fix(func)
 
             if not has_context_param(func):
                 raise InvalidContextParam(
@@ -1090,6 +1120,7 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
         deps: Deps = Deps(),
         retries: int | None = None,
         strict: bool | None = None,
+        fix_now: bool = False,
         reload_function: bool = True,
         **options,
     ) -> Callable[[Callable[ToolParams, T]], ToolFuncContext]:
@@ -1227,9 +1258,10 @@ class VenusCode(Venus, Generic[AgentDepsT, OutputDataT]):
         self._execution_allowed = execution_allowed
 
         if e2b_sandbox and not execution_allowed:
-            raise ExecutionNotAllowed(
+            if warnings:
+                vc.log(
                 "Sandbox mode is enabled but code execution is not allowed. "
-                "Please set `execution_allowed=True` to use sandbox mode."
+                "Set `execution_allowed=True` to use sandbox code execution."
             )
 
         if e2b_sandbox and execution_allowed:

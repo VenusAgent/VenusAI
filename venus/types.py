@@ -4,17 +4,25 @@ This is a module that provides various types and classes for the Venus AI agent.
 
 import importlib
 from types import EllipsisType, GenericAlias
-from typing import (Any, Awaitable, Callable, Generic, Literal, ParamSpec,
-                    TypeAlias, TypeVar, Union, cast, get_origin,
-                    get_type_hints)
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Generic,
+    Literal,
+    ParamSpec,
+    TypeAlias,
+    TypeVar,
+    Union,
+    get_origin,
+    get_type_hints,
+)
 
-from attrobj import Object
-from pydantic import TypeAdapter
 from pydantic_ai import ModelRetry
+from pydantic import TypeAdapter, ValidationError
 from pydantic_ai._run_context import AgentDepsT, RunContext
 from pydantic_ai.agent import Agent
-from pydantic_ai.mcp import (MCPServerSSE, MCPServerStdio,
-                             MCPServerStreamableHTTP)
+from pydantic_ai.mcp import MCPServerSSE, MCPServerStdio, MCPServerStreamableHTTP
 from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.models.test import TestModel
@@ -42,6 +50,9 @@ ReturnType = TypeVar("ReturnType")
 DepsT = TypeVar("DepsT", bound=Any)
 EnableFeatureT = TypeVar("EnableFeatureT", bound=EllipsisType)
 
+# Mapping types
+_KT = TypeVar("_KT")
+_VT = TypeVar("_VT")
 
 # Type aliases
 _EnableFeature: TypeAlias = EnableFeatureT
@@ -56,27 +67,35 @@ ToolsPrepareFunc: TypeAlias = Callable[
     Awaitable[list[ToolDefinition] | None],
 ]
 
-get_type = lambda func, param: cast(type, get_type_hints(func).get(param, None))
-"""
-Get the type of a parameter in a function.
-Args:
-    func (Callable[..., Any]): The function to get the type from.
-    param (str): The parameter name.
-Returns:
-    type: The type of the parameter.
-"""
 
-get_base_type = lambda func, param: cast(
-    type, get_origin(get_type(func, param)) or get_type(func, param)
-)
-"""
-Get the base type of a parameter in a function.
-Args:
-    func (Callable[..., Any]): The function to get the type from.
-    param (str): The parameter name.
-Returns:
-    type: The base type of the parameter.
-"""
+def get_type(func: Callable[..., Any], param: str):
+    """
+    Get the type of a parameter in a function.
+    Args:
+        func (Callable[..., Any]): The function to get the type from.
+        param (str): The parameter name.
+    Returns:
+        type: The type of the parameter.
+    """
+    return get_type_hints(func).get(param, None)
+
+
+def get_base_type(func: Callable[..., Any], param: str) -> type:
+    """
+    Get the base type of a parameter in a function.
+    Args:
+        func (Callable[..., Any]): The function to get the type from.
+        param (str): The parameter name.
+    Returns:
+        type: The base type of the parameter.
+    """
+    return get_origin(get_type(func, param)) or get_type(func, param)
+
+
+class Object(dict[_KT, _VT]):
+    """A dictionary that supports attribute-style access."""
+
+    __getattr__: Callable[[_KT], _VT] = dict.__getitem__
 
 
 class Deps(Object, Generic[DepsT]):
@@ -135,13 +154,13 @@ class Deps(Object, Generic[DepsT]):
         ):
             try:
                 adapter = TypeAdapter(key)
-            except:
+            except Exception:
                 return super().get(key, default)
             for v in self.values():
                 try:
                     adapter.validate_python(v)
                     return v
-                except:
+                except ValidationError:
                     continue
         key = key if isinstance(key, str) else get_origin(key) or key
         return super().get(key, default)
@@ -192,6 +211,7 @@ class CacheDeps(Deps[DepsT]):
     pass
 
 
+# TODO: remove this after next release
 def __getattr__(name: str) -> Entity:
     """
     Dynamic attribute access for the Deps object.
@@ -230,7 +250,7 @@ def __getattr__(name: str) -> Entity:
             try:
                 lib = importlib.import_module(ns)
                 return getattr(lib, name)
-            except:
+            except (AttributeError, ImportError, ModuleNotFoundError):
                 continue
         raise AttributeError(f"Can not import '{name}' from '{last_ns}' namespace.")
 
