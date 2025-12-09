@@ -179,8 +179,8 @@ venus serve agent:agent a2a --env dev
 
 ```python
 from pydantic_ai import RunContext
-from venusai.venus import VenusCode
-from venusai.venus.errors import ErrorDict
+from venus import VenusCode
+from venus.errors import ErrorDict
 
 agent = VenusCode('groq:qwen/qwen3-32b')
 
