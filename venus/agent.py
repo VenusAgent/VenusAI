@@ -663,6 +663,22 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
         ) -> None:
             annotations = get_type_hints(func)
             parameters = inspect.signature(func).parameters
+            if is_context_tool(func):
+                msg = (
+                    f"Tool function '{name}' cannot have RunContext parameter "
+                    "when exposed as HTTP API. Please remove the context parameter and decorate via @agent.safe_plain "
+                    "or pass strict=False into tools_http_api()"
+                )
+                if strict:
+                    raise InvalidTool(msg)
+                else:
+                    vc.log(
+                        f"{msg}, skipped to register as route",
+                        bold=True,
+                        color="red",
+                        level_color="red",
+                    )
+                    return
             if any(
                 param.kind
                 in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL)
