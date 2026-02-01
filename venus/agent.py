@@ -684,7 +684,7 @@ class Venus(Agent, Generic[AgentDepsT, OutputDataT]):  # pyright: ignore
                     return
 
             async def route_func(**kwargs):
-                if hasattr(func, "iscoro") or asyncio.iscoroutinefunction(func):
+                if asyncio.iscoroutinefunction(func):
                     return await func(**kwargs)
                 return func(**kwargs)
 
